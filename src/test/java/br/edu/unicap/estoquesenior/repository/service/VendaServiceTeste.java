@@ -1,9 +1,10 @@
-package br.edu.unicap.estoquesenior.service;
+package br.edu.unicap.estoquesenior.repository.service;
 
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.model.Venda;
 import br.edu.unicap.estoquesenior.repository.ProdutoRepository;
 import br.edu.unicap.estoquesenior.repository.VendaRepository;
+import br.edu.unicap.estoquesenior.service.VendaService;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,13 +37,13 @@ class VendaServiceTeste {
         produto.setQuantidadeEstoque(10);
         produto.setEstoqueMinimo(2);
 
-        produto = produtoRepository.save(produto);
+        Produto produtoSalvo = produtoRepository.save(produto);
 
         // Act
-        Venda venda = vendaService.registrarVenda(produto.getId(), 2);
+        Venda venda = vendaService.registrarVenda(produtoSalvo.getId(), 2);
 
         // Assert
-        Produto produtoAtualizado = produtoRepository.findById(produto.getId()).get();
+        Produto produtoAtualizado = produtoRepository.findById(produtoSalvo.getId()).get();
 
         assertNotNull(venda);
         assertNotNull(venda.getId());
@@ -61,16 +62,16 @@ class VendaServiceTeste {
         produto.setQuantidadeEstoque(3);
         produto.setEstoqueMinimo(1);
 
-        produto = produtoRepository.save(produto);
+        Produto produtoSalvo = produtoRepository.save(produto);
 
         IllegalArgumentException erro = assertThrows(
                 IllegalArgumentException.class,
-                () -> vendaService.registrarVenda(produto.getId(), 5)
+                () -> vendaService.registrarVenda(produtoSalvo.getId(), 5)
         );
 
         assertEquals("Estoque insuficiente.", erro.getMessage());
 
-        Produto produtoAtualizado = produtoRepository.findById(produto.getId()).get();
+        Produto produtoAtualizado = produtoRepository.findById(produtoSalvo.getId()).get();
         assertEquals(3, produtoAtualizado.getQuantidadeEstoque());
     }
 
@@ -83,11 +84,11 @@ class VendaServiceTeste {
         produto.setQuantidadeEstoque(10);
         produto.setEstoqueMinimo(2);
 
-        produto = produtoRepository.save(produto);
+        Produto produtoSalvo = produtoRepository.save(produto);
 
         IllegalArgumentException erro = assertThrows(
                 IllegalArgumentException.class,
-                () -> vendaService.registrarVenda(produto.getId(), 0)
+                () -> vendaService.registrarVenda(produtoSalvo.getId(), 0)
         );
 
         assertEquals(
@@ -105,11 +106,11 @@ class VendaServiceTeste {
         produto.setQuantidadeEstoque(10);
         produto.setEstoqueMinimo(2);
 
-        produto = produtoRepository.save(produto);
+        Produto produtoSalvo = produtoRepository.save(produto);
 
         IllegalArgumentException erro = assertThrows(
                 IllegalArgumentException.class,
-                () -> vendaService.registrarVenda(produto.getId(), -1)
+                () -> vendaService.registrarVenda(produtoSalvo.getId(), -1)
         );
 
         assertEquals(
