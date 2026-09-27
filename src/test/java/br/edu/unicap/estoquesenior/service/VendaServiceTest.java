@@ -1,11 +1,9 @@
-package br.edu.unicap.estoquesenior.repository.service;
+package br.edu.unicap.estoquesenior.service;
 
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.model.Venda;
 import br.edu.unicap.estoquesenior.repository.ProdutoRepository;
-import br.edu.unicap.estoquesenior.repository.VendaRepository;
-import br.edu.unicap.estoquesenior.service.VendaService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,16 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-class VendaServiceTeste {
+class VendaServiceTest {
 
     @Autowired
     private VendaService vendaService;
 
     @Autowired
     private ProdutoRepository produtoRepository;
-
-    @Autowired
-    private VendaRepository vendaRepository;
 
     @Test
     void deveRegistrarVendaComSucesso() {
@@ -129,28 +124,4 @@ class VendaServiceTeste {
 
         assertEquals("Produto não encontrado.", erro.getMessage());
     }
-
-	public VendaService getVendaService() {
-		return vendaService;
-	}
-
-	public void setVendaService(VendaService vendaService) {
-		this.vendaService = vendaService;
-	}
-
-	public ProdutoRepository getProdutoRepository() {
-		return produtoRepository;
-	}
-
-	public void setProdutoRepository(ProdutoRepository produtoRepository) {
-		this.produtoRepository = produtoRepository;
-	}
-
-	public VendaRepository getVendaRepository() {
-		return vendaRepository;
-	}
-
-	public void setVendaRepository(VendaRepository vendaRepository) {
-		this.vendaRepository = vendaRepository;
-	}
 }
