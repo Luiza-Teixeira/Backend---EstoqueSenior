@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Transactional
-class ProdutoRepositoryTeste {
+class ProdutoRepositoryTest {
 
     @Autowired
     private ProdutoRepository produtoRepository;

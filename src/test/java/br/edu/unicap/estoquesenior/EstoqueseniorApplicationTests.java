@@ -9,5 +9,4 @@ class EstoqueseniorApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }

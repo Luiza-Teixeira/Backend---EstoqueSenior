@@ -5,10 +5,13 @@ import br.edu.unicap.estoquesenior.model.Venda;
 import br.edu.unicap.estoquesenior.repository.ProdutoRepository;
 import br.edu.unicap.estoquesenior.repository.VendaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Service
+@Transactional
+
 public class VendaService {
 
     private final ProdutoRepository produtoRepository;
