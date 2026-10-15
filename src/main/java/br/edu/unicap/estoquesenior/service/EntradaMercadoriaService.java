@@ -1,7 +1,9 @@
-
 package br.edu.unicap.estoquesenior.service;
 
 import br.edu.unicap.estoquesenior.dto.EntradaMercadoriaRequestDTO;
+import br.edu.unicap.estoquesenior.exception.LimiteEstoqueExcedidoException;
+import br.edu.unicap.estoquesenior.exception.ProdutoNaoEncontradoException;
+import br.edu.unicap.estoquesenior.exception.QuantidadeEntradaInvalidaException;
 import br.edu.unicap.estoquesenior.model.EntradaMercadoria;
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.repository.EntradaMercadoriaRepository;
@@ -26,20 +28,20 @@ public class EntradaMercadoriaService {
             EntradaMercadoriaRequestDTO dto) {
 
         if (dto.quantidade() == null || dto.quantidade() <= 0) {
-            throw new IllegalArgumentException(
+            throw new QuantidadeEntradaInvalidaException(
                     "A quantidade da entrada deve ser maior que zero."
             );
         }
 
         Produto produto = produtoRepository.findById(dto.produtoId())
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ProdutoNaoEncontradoException(
                         "Produto não encontrado."
                 ));
 
         int estoqueAtual = produto.getQuantidadeEstoque();
 
         if ((long) estoqueAtual + dto.quantidade() > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException(
+            throw new LimiteEstoqueExcedidoException(
                     "A quantidade total excede o limite permitido."
             );
         }

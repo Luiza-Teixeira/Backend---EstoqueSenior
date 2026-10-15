@@ -1,5 +1,8 @@
 package br.edu.unicap.estoquesenior.service;
 
+import br.edu.unicap.estoquesenior.exception.EstoqueInsuficienteException;
+import br.edu.unicap.estoquesenior.exception.ProdutoNaoEncontradoException;
+import br.edu.unicap.estoquesenior.exception.QuantidadeVendaInvalidaException;
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.model.Venda;
 import br.edu.unicap.estoquesenior.repository.ProdutoRepository;
@@ -11,7 +14,6 @@ import java.time.LocalDateTime;
 
 @Service
 @Transactional
-
 public class VendaService {
 
     private final ProdutoRepository produtoRepository;
@@ -27,42 +29,35 @@ public class VendaService {
 
     public Venda registrarVenda(Long produtoId, Integer quantidade) {
 
-        // Verifica se a quantidade informada é válida
         if (quantidade == null || quantidade <= 0) {
-            throw new IllegalArgumentException(
+            throw new QuantidadeVendaInvalidaException(
                     "A quantidade da venda deve ser maior que zero."
             );
         }
 
-        // Busca o produto pelo ID
         Produto produto = produtoRepository.findById(produtoId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ProdutoNaoEncontradoException(
                         "Produto não encontrado."
                 ));
 
-        // Verifica se existe estoque suficiente
         if (quantidade > produto.getQuantidadeEstoque()) {
-            throw new IllegalArgumentException(
+            throw new EstoqueInsuficienteException(
                     "Estoque insuficiente."
             );
         }
 
-        // Diminui a quantidade do estoque
         produto.setQuantidadeEstoque(
                 produto.getQuantidadeEstoque() - quantidade
         );
 
-        // Salva o estoque atualizado
         produtoRepository.save(produto);
 
-        // Cria a venda
         Venda venda = new Venda();
         venda.setProduto(produto);
         venda.setQuantidade(quantidade);
         venda.setValorUnitario(produto.getPrecoVenda());
         venda.setDataHora(LocalDateTime.now());
 
-        // Salva a venda
         return vendaRepository.save(venda);
     }
 }
