@@ -3,119 +3,130 @@ package br.edu.unicap.estoquesenior.service;
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.model.Venda;
 import br.edu.unicap.estoquesenior.repository.ProdutoRepository;
-import org.springframework.transaction.annotation.Transactional;
+import br.edu.unicap.estoquesenior.repository.VendaRepository;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class VendaServiceTest {
 
-    @Autowired
-    private VendaService vendaService;
-
-    @Autowired
+    @Mock
     private ProdutoRepository produtoRepository;
 
-    @Test
-    void deveRegistrarVendaComSucesso() {
+    @Mock
+    private VendaRepository vendaRepository;
 
-        // Arrange
-        Produto produto = new Produto();
+    @InjectMocks
+    private VendaService vendaService;
+
+    private Produto produto;
+
+    @BeforeEach
+    void configurar() {
+        produto = new Produto();
+        produto.setId(1L);
         produto.setNome("Coca-Cola 2L");
         produto.setPrecoVenda(new BigDecimal("10.00"));
         produto.setQuantidadeEstoque(10);
         produto.setEstoqueMinimo(2);
+    }
 
-        Produto produtoSalvo = produtoRepository.save(produto);
+    @Test
+    void deveRegistrarVendaComSucesso() {
 
-        // Act
-        Venda venda = vendaService.registrarVenda(produtoSalvo.getId(), 2);
+        when(produtoRepository.findById(1L))
+                .thenReturn(Optional.of(produto));
 
-        // Assert
-        Produto produtoAtualizado = produtoRepository.findById(produtoSalvo.getId()).get();
+        when(vendaRepository.save(any(Venda.class)))
+                .thenAnswer(invocacao -> {
+                    Venda venda = invocacao.getArgument(0);
+                    venda.setId(100L);
+                    return venda;
+                });
+
+        Venda venda = vendaService.registrarVenda(1L, 2);
 
         assertNotNull(venda);
-        assertNotNull(venda.getId());
+        assertEquals(100L, venda.getId());
         assertEquals(2, venda.getQuantidade());
         assertEquals(new BigDecimal("10.00"), venda.getValorUnitario());
-        assertEquals(8, produtoAtualizado.getQuantidadeEstoque());
+        assertEquals(8, produto.getQuantidadeEstoque());
         assertNotNull(venda.getDataHora());
+
+        verify(produtoRepository).save(produto);
+        verify(vendaRepository).save(any(Venda.class));
     }
 
     @Test
     void naoDeveRegistrarVendaComEstoqueInsuficiente() {
 
-        Produto produto = new Produto();
-        produto.setNome("Chocolate");
-        produto.setPrecoVenda(new BigDecimal("5.00"));
         produto.setQuantidadeEstoque(3);
-        produto.setEstoqueMinimo(1);
 
-        Produto produtoSalvo = produtoRepository.save(produto);
+        when(produtoRepository.findById(1L))
+                .thenReturn(Optional.of(produto));
 
         IllegalArgumentException erro = assertThrows(
                 IllegalArgumentException.class,
-                () -> vendaService.registrarVenda(produtoSalvo.getId(), 5)
+                () -> vendaService.registrarVenda(1L, 5)
         );
 
         assertEquals("Estoque insuficiente.", erro.getMessage());
+        assertEquals(3, produto.getQuantidadeEstoque());
 
-        Produto produtoAtualizado = produtoRepository.findById(produtoSalvo.getId()).get();
-        assertEquals(3, produtoAtualizado.getQuantidadeEstoque());
+        verify(produtoRepository, never()).save(any(Produto.class));
+        verify(vendaRepository, never()).save(any(Venda.class));
     }
 
     @Test
     void naoDeveRegistrarVendaComQuantidadeZero() {
 
-        Produto produto = new Produto();
-        produto.setNome("Biscoito");
-        produto.setPrecoVenda(new BigDecimal("3.00"));
-        produto.setQuantidadeEstoque(10);
-        produto.setEstoqueMinimo(2);
-
-        Produto produtoSalvo = produtoRepository.save(produto);
-
         IllegalArgumentException erro = assertThrows(
                 IllegalArgumentException.class,
-                () -> vendaService.registrarVenda(produtoSalvo.getId(), 0)
+                () -> vendaService.registrarVenda(1L, 0)
         );
 
         assertEquals(
                 "A quantidade da venda deve ser maior que zero.",
                 erro.getMessage()
         );
+
+        verifyNoInteractions(produtoRepository, vendaRepository);
     }
 
     @Test
     void naoDeveRegistrarVendaComQuantidadeNegativa() {
 
-        Produto produto = new Produto();
-        produto.setNome("Refrigerante");
-        produto.setPrecoVenda(new BigDecimal("8.00"));
-        produto.setQuantidadeEstoque(10);
-        produto.setEstoqueMinimo(2);
-
-        Produto produtoSalvo = produtoRepository.save(produto);
-
         IllegalArgumentException erro = assertThrows(
                 IllegalArgumentException.class,
-                () -> vendaService.registrarVenda(produtoSalvo.getId(), -1)
+                () -> vendaService.registrarVenda(1L, -1)
         );
 
         assertEquals(
                 "A quantidade da venda deve ser maior que zero.",
                 erro.getMessage()
         );
+
+        verifyNoInteractions(produtoRepository, vendaRepository);
     }
 
     @Test
     void naoDeveRegistrarVendaDeProdutoInexistente() {
+
+        when(produtoRepository.findById(999L))
+                .thenReturn(Optional.empty());
 
         IllegalArgumentException erro = assertThrows(
                 IllegalArgumentException.class,
@@ -123,5 +134,8 @@ class VendaServiceTest {
         );
 
         assertEquals("Produto não encontrado.", erro.getMessage());
+
+        verify(produtoRepository).findById(999L);
+        verify(vendaRepository, never()).save(any(Venda.class));
     }
 }
