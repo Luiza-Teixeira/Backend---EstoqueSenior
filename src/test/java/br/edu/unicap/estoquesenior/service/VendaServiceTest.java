@@ -1,5 +1,8 @@
 package br.edu.unicap.estoquesenior.service;
 
+import br.edu.unicap.estoquesenior.exception.EstoqueInsuficienteException;
+import br.edu.unicap.estoquesenior.exception.ProdutoNaoEncontradoException;
+import br.edu.unicap.estoquesenior.exception.QuantidadeVendaInvalidaException;
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.model.Venda;
 import br.edu.unicap.estoquesenior.repository.ProdutoRepository;
@@ -78,8 +81,8 @@ class VendaServiceTest {
         when(produtoRepository.findById(1L))
                 .thenReturn(Optional.of(produto));
 
-        IllegalArgumentException erro = assertThrows(
-                IllegalArgumentException.class,
+        EstoqueInsuficienteException erro = assertThrows(
+                EstoqueInsuficienteException.class,
                 () -> vendaService.registrarVenda(1L, 5)
         );
 
@@ -93,8 +96,8 @@ class VendaServiceTest {
     @Test
     void naoDeveRegistrarVendaComQuantidadeZero() {
 
-        IllegalArgumentException erro = assertThrows(
-                IllegalArgumentException.class,
+        QuantidadeVendaInvalidaException erro = assertThrows(
+                QuantidadeVendaInvalidaException.class,
                 () -> vendaService.registrarVenda(1L, 0)
         );
 
@@ -109,8 +112,8 @@ class VendaServiceTest {
     @Test
     void naoDeveRegistrarVendaComQuantidadeNegativa() {
 
-        IllegalArgumentException erro = assertThrows(
-                IllegalArgumentException.class,
+        QuantidadeVendaInvalidaException erro = assertThrows(
+                QuantidadeVendaInvalidaException.class,
                 () -> vendaService.registrarVenda(1L, -1)
         );
 
@@ -128,8 +131,8 @@ class VendaServiceTest {
         when(produtoRepository.findById(999L))
                 .thenReturn(Optional.empty());
 
-        IllegalArgumentException erro = assertThrows(
-                IllegalArgumentException.class,
+        ProdutoNaoEncontradoException erro = assertThrows(
+                ProdutoNaoEncontradoException.class,
                 () -> vendaService.registrarVenda(999L, 2)
         );
 
