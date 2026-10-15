@@ -1,6 +1,9 @@
 package br.edu.unicap.estoquesenior.service;
 
 import br.edu.unicap.estoquesenior.dto.EntradaMercadoriaRequestDTO;
+import br.edu.unicap.estoquesenior.exception.LimiteEstoqueExcedidoException;
+import br.edu.unicap.estoquesenior.exception.ProdutoNaoEncontradoException;
+import br.edu.unicap.estoquesenior.exception.QuantidadeEntradaInvalidaException;
 import br.edu.unicap.estoquesenior.model.EntradaMercadoria;
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.repository.EntradaMercadoriaRepository;
@@ -47,11 +50,9 @@ class EntradaMercadoriaServiceTest {
 
     @Test
     void deveRegistrarEntradaEAtualizarEstoque() {
+
         when(produtoRepository.findById(1L))
                 .thenReturn(Optional.of(produto));
-
-        when(produtoRepository.save(any(Produto.class)))
-                .thenAnswer(invocacao -> invocacao.getArgument(0));
 
         when(entradaRepository.save(any(EntradaMercadoria.class)))
                 .thenAnswer(invocacao -> {
@@ -77,12 +78,18 @@ class EntradaMercadoriaServiceTest {
 
     @Test
     void naoDeveRegistrarEntradaComQuantidadeZero() {
+
         EntradaMercadoriaRequestDTO dto =
                 new EntradaMercadoriaRequestDTO(1L, 0);
 
-        assertThrows(
-                IllegalArgumentException.class,
+        QuantidadeEntradaInvalidaException erro = assertThrows(
+                QuantidadeEntradaInvalidaException.class,
                 () -> entradaService.registrar(dto)
+        );
+
+        assertEquals(
+                "A quantidade da entrada deve ser maior que zero.",
+                erro.getMessage()
         );
 
         verifyNoInteractions(produtoRepository, entradaRepository);
@@ -90,12 +97,18 @@ class EntradaMercadoriaServiceTest {
 
     @Test
     void naoDeveRegistrarEntradaComQuantidadeNegativa() {
+
         EntradaMercadoriaRequestDTO dto =
                 new EntradaMercadoriaRequestDTO(1L, -3);
 
-        assertThrows(
-                IllegalArgumentException.class,
+        QuantidadeEntradaInvalidaException erro = assertThrows(
+                QuantidadeEntradaInvalidaException.class,
                 () -> entradaService.registrar(dto)
+        );
+
+        assertEquals(
+                "A quantidade da entrada deve ser maior que zero.",
+                erro.getMessage()
         );
 
         verifyNoInteractions(produtoRepository, entradaRepository);
@@ -103,19 +116,53 @@ class EntradaMercadoriaServiceTest {
 
     @Test
     void naoDeveRegistrarEntradaDeProdutoInexistente() {
+
         when(produtoRepository.findById(999L))
                 .thenReturn(Optional.empty());
 
         EntradaMercadoriaRequestDTO dto =
                 new EntradaMercadoriaRequestDTO(999L, 5);
 
-        assertThrows(
-                IllegalArgumentException.class,
+        ProdutoNaoEncontradoException erro = assertThrows(
+                ProdutoNaoEncontradoException.class,
                 () -> entradaService.registrar(dto)
         );
 
+        assertEquals("Produto não encontrado.", erro.getMessage());
+
+        verify(produtoRepository).findById(999L);
         verify(entradaRepository, never())
                 .save(any(EntradaMercadoria.class));
-    
-}
+    }
+
+    @Test
+    void naoDeveRegistrarEntradaQuandoUltrapassarLimiteDoEstoque() {
+
+        produto.setQuantidadeEstoque(Integer.MAX_VALUE);
+
+        when(produtoRepository.findById(1L))
+                .thenReturn(Optional.of(produto));
+
+        EntradaMercadoriaRequestDTO dto =
+                new EntradaMercadoriaRequestDTO(1L, 1);
+
+        LimiteEstoqueExcedidoException erro = assertThrows(
+                LimiteEstoqueExcedidoException.class,
+                () -> entradaService.registrar(dto)
+        );
+
+        assertEquals(
+                "A quantidade total excede o limite permitido.",
+                erro.getMessage()
+        );
+
+        assertEquals(
+                Integer.MAX_VALUE,
+                produto.getQuantidadeEstoque()
+        );
+
+        verify(produtoRepository, never()).save(any(Produto.class));
+        verify(entradaRepository, never())
+                .save(any(EntradaMercadoria.class));
+    }
 }
