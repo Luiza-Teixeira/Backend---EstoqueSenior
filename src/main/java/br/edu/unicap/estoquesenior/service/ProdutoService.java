@@ -1,13 +1,14 @@
 package br.edu.unicap.estoquesenior.service;
 
+import br.edu.unicap.estoquesenior.dto.ProdutoAtualizacaoDTO;
 import br.edu.unicap.estoquesenior.dto.ProdutoRequestDTO;
+import br.edu.unicap.estoquesenior.exception.ProdutoNaoEncontradoException;
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +31,20 @@ public class ProdutoService {
         return produtoRepository.findAll();
     }
 
-    public Optional<Produto> buscarPorId(Long id) {
-        return produtoRepository.findById(id);
+    public Produto buscarPorId(Long id) {
+        return produtoRepository.findById(id)
+                .orElseThrow(() -> new ProdutoNaoEncontradoException(
+                        "Produto não encontrado."
+                ));
+    }
+
+    public Produto atualizar(Long id, ProdutoAtualizacaoDTO dto) {
+        Produto produto = buscarPorId(id);
+
+        produto.setNome(dto.nome());
+        produto.setPrecoVenda(dto.precoVenda());
+        produto.setEstoqueMinimo(dto.estoqueMinimo());
+
+        return produtoRepository.save(produto);
     }
 }

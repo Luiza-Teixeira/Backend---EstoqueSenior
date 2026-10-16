@@ -1,5 +1,6 @@
 package br.edu.unicap.estoquesenior.controller;
 
+import br.edu.unicap.estoquesenior.dto.ProdutoAtualizacaoDTO;
 import br.edu.unicap.estoquesenior.dto.ProdutoRequestDTO;
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.service.ProdutoService;
@@ -19,7 +20,9 @@ public class ProdutoController {
     private final ProdutoService produtoService;
 
     @PostMapping
-    public ResponseEntity<Produto> cadastrar(@Valid @RequestBody ProdutoRequestDTO dto) {
+    public ResponseEntity<Produto> cadastrar(
+            @Valid @RequestBody ProdutoRequestDTO dto) {
+
         Produto produto = produtoService.cadastrar(dto);
 
         URI location = URI.create("/produtos/" + produto.getId());
@@ -33,9 +36,19 @@ public class ProdutoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Produto> buscarPorId(@PathVariable Long id) {
-        return produtoService.buscarPorId(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Produto> buscarPorId(
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(produtoService.buscarPorId(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Produto> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody ProdutoAtualizacaoDTO dto) {
+
+        return ResponseEntity.ok(
+                produtoService.atualizar(id, dto)
+        );
     }
 }
