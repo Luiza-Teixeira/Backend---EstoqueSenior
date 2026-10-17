@@ -1,5 +1,8 @@
 package br.edu.unicap.estoquesenior.service;
 
+import br.edu.unicap.estoquesenior.exception.EstoqueInsuficienteException;
+import br.edu.unicap.estoquesenior.exception.ProdutoNaoEncontradoException;
+import br.edu.unicap.estoquesenior.exception.QuantidadeVendaInvalidaException;
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.model.Venda;
 import br.edu.unicap.estoquesenior.repository.ProdutoRepository;
@@ -72,8 +75,8 @@ class VendaServiceTest {
         produto.setQuantidadeEstoque(3);
         when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
 
-        IllegalArgumentException erro = assertThrows(
-                IllegalArgumentException.class,
+        EstoqueInsuficienteException erro = assertThrows(
+                EstoqueInsuficienteException.class,
                 () -> vendaService.registrarVenda(1L, 5)
         );
 
@@ -86,8 +89,8 @@ class VendaServiceTest {
 
     @Test
     void naoDeveRegistrarVendaComQuantidadeZero() {
-        IllegalArgumentException erro = assertThrows(
-                IllegalArgumentException.class,
+        QuantidadeVendaInvalidaException erro = assertThrows(
+                QuantidadeVendaInvalidaException.class,
                 () -> vendaService.registrarVenda(1L, 0)
         );
 
@@ -97,8 +100,8 @@ class VendaServiceTest {
 
     @Test
     void naoDeveRegistrarVendaComQuantidadeNegativa() {
-        IllegalArgumentException erro = assertThrows(
-                IllegalArgumentException.class,
+        QuantidadeVendaInvalidaException erro = assertThrows(
+                QuantidadeVendaInvalidaException.class,
                 () -> vendaService.registrarVenda(1L, -1)
         );
 
@@ -110,8 +113,8 @@ class VendaServiceTest {
     void naoDeveRegistrarVendaDeProdutoInexistente() {
         when(produtoRepository.findById(999L)).thenReturn(Optional.empty());
 
-        IllegalArgumentException erro = assertThrows(
-                IllegalArgumentException.class,
+        ProdutoNaoEncontradoException erro = assertThrows(
+                ProdutoNaoEncontradoException.class,
                 () -> vendaService.registrarVenda(999L, 2)
         );
 
@@ -119,7 +122,6 @@ class VendaServiceTest {
         verify(produtoRepository).findById(999L);
         verify(vendaRepository, never()).save(any(Venda.class));
     }
-
 
     @Test
     void deveListarTodasAsVendas() {
@@ -144,5 +146,15 @@ class VendaServiceTest {
         assertTrue(resultado.isPresent());
         assertEquals(1L, resultado.get().getId());
         verify(vendaRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void deveRetornarVazioQuandoBuscarVendaPorIdInexistente() {
+        when(vendaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Optional<Venda> resultado = vendaService.buscarPorId(99L);
+
+        assertTrue(resultado.isEmpty());
+        verify(vendaRepository, times(1)).findById(99L);
     }
 }
