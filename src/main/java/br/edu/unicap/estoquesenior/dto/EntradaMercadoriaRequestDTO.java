@@ -3,6 +3,7 @@ package br.edu.unicap.estoquesenior.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.math.BigDecimal;
 
 public record EntradaMercadoriaRequestDTO(
 
@@ -12,7 +13,10 @@ public record EntradaMercadoriaRequestDTO(
 
         @NotNull(message = "A quantidade é obrigatória.")
         @Positive(message = "A quantidade deve ser maior que zero.")
-        Integer quantidade
+        Integer quantidade,
 
+        @NotNull(message = "O custo unitário é obrigatório")
+        @Positive(message = "O custo unitário deve ser maior que zero")
+        BigDecimal custoUnitario
 ) {
 }

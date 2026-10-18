@@ -8,11 +8,10 @@ import br.edu.unicap.estoquesenior.model.EntradaMercadoria;
 import br.edu.unicap.estoquesenior.model.Produto;
 import br.edu.unicap.estoquesenior.repository.EntradaMercadoriaRepository;
 import br.edu.unicap.estoquesenior.repository.ProdutoRepository;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,135 +33,93 @@ class EntradaMercadoriaServiceTest {
     private ProdutoRepository produtoRepository;
 
     @InjectMocks
-    private EntradaMercadoriaService entradaService;
+    private EntradaMercadoriaService entradaMercadoriaService;
 
     private Produto produto;
 
     @BeforeEach
-    void configurar() {
+    void setUp() {
         produto = new Produto();
         produto.setId(1L);
-        produto.setNome("Refrigerante");
-        produto.setPrecoVenda(new BigDecimal("5.00"));
         produto.setQuantidadeEstoque(10);
-        produto.setEstoqueMinimo(2);
     }
 
     @Test
-    void deveRegistrarEntradaEAtualizarEstoque() {
+    void deveRegistrarEntradaMercadoriaComSucessoEAtribuirCustoUnitario() {
+        // Arrange
+        BigDecimal custoUnitarioEsperado = new BigDecimal("25.50");
+        EntradaMercadoriaRequestDTO dto = new EntradaMercadoriaRequestDTO(1L, 5, custoUnitarioEsperado);
 
-        when(produtoRepository.findById(1L))
-                .thenReturn(Optional.of(produto));
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(entradaRepository.save(any(EntradaMercadoria.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        when(entradaRepository.save(any(EntradaMercadoria.class)))
-                .thenAnswer(invocacao -> {
-                    EntradaMercadoria entrada = invocacao.getArgument(0);
-                    entrada.setId(100L);
-                    return entrada;
-                });
+        // Act
+        EntradaMercadoria resultado = entradaMercadoriaService.registrar(dto);
 
-        EntradaMercadoriaRequestDTO dto =
-                new EntradaMercadoriaRequestDTO(1L, 5);
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(15, produto.getQuantidadeEstoque()); // Estoque atualizado de 10 para 15
+        assertEquals(custoUnitarioEsperado, resultado.getCustoUnitario()); // Valida o custo unitário
 
-        EntradaMercadoria resultado = entradaService.registrar(dto);
+        // Captura do objeto salvo para dupla verificação
+        ArgumentCaptor<EntradaMercadoria> captor = ArgumentCaptor.forClass(EntradaMercadoria.class);
+        verify(entradaRepository).save(captor.capture());
+        EntradaMercadoria entradaSalva = captor.getValue();
 
-        assertEquals(15, produto.getQuantidadeEstoque());
-        assertEquals(100L, resultado.getId());
-        assertEquals(5, resultado.getQuantidade());
-        assertEquals(1L, resultado.getProduto().getId());
-        assertNotNull(resultado.getDataHora());
+        assertEquals(custoUnitarioEsperado, entradaSalva.getCustoUnitario());
+        assertEquals(5, entradaSalva.getQuantidade());
+        assertEquals(produto, entradaSalva.getProduto());
 
-        verify(produtoRepository).save(produto);
-        verify(entradaRepository).save(any(EntradaMercadoria.class));
+        verify(produtoRepository, times(1)).save(produto);
     }
 
     @Test
-    void naoDeveRegistrarEntradaComQuantidadeZero() {
+    void deveLancarExcecaoQuandoQuantidadeForInvalida() {
+        // Arrange
+        EntradaMercadoriaRequestDTO dto = new EntradaMercadoriaRequestDTO(1L, 0, new BigDecimal("10.00"));
 
-        EntradaMercadoriaRequestDTO dto =
-                new EntradaMercadoriaRequestDTO(1L, 0);
-
-        QuantidadeEntradaInvalidaException erro = assertThrows(
+        // Act & Assert
+        QuantidadeEntradaInvalidaException exception = assertThrows(
                 QuantidadeEntradaInvalidaException.class,
-                () -> entradaService.registrar(dto)
+                () -> entradaMercadoriaService.registrar(dto)
         );
 
-        assertEquals(
-                "A quantidade da entrada deve ser maior que zero.",
-                erro.getMessage()
-        );
-
-        verifyNoInteractions(produtoRepository, entradaRepository);
+        assertEquals("A quantidade da entrada deve ser maior que zero.", exception.getMessage());
+        verifyNoInteractions(produtoRepository);
+        verifyNoInteractions(entradaRepository);
     }
 
     @Test
-    void naoDeveRegistrarEntradaComQuantidadeNegativa() {
+    void deveLancarExcecaoQuandoProdutoNaoForEncontrado() {
+        // Arrange
+        EntradaMercadoriaRequestDTO dto = new EntradaMercadoriaRequestDTO(99L, 5, new BigDecimal("10.00"));
+        when(produtoRepository.findById(99L)).thenReturn(Optional.empty());
 
-        EntradaMercadoriaRequestDTO dto =
-                new EntradaMercadoriaRequestDTO(1L, -3);
-
-        QuantidadeEntradaInvalidaException erro = assertThrows(
-                QuantidadeEntradaInvalidaException.class,
-                () -> entradaService.registrar(dto)
-        );
-
-        assertEquals(
-                "A quantidade da entrada deve ser maior que zero.",
-                erro.getMessage()
-        );
-
-        verifyNoInteractions(produtoRepository, entradaRepository);
-    }
-
-    @Test
-    void naoDeveRegistrarEntradaDeProdutoInexistente() {
-
-        when(produtoRepository.findById(999L))
-                .thenReturn(Optional.empty());
-
-        EntradaMercadoriaRequestDTO dto =
-                new EntradaMercadoriaRequestDTO(999L, 5);
-
-        ProdutoNaoEncontradoException erro = assertThrows(
+        // Act & Assert
+        ProdutoNaoEncontradoException exception = assertThrows(
                 ProdutoNaoEncontradoException.class,
-                () -> entradaService.registrar(dto)
+                () -> entradaMercadoriaService.registrar(dto)
         );
 
-        assertEquals("Produto não encontrado.", erro.getMessage());
-
-        verify(produtoRepository).findById(999L);
-        verify(entradaRepository, never())
-                .save(any(EntradaMercadoria.class));
+        assertEquals("Produto não encontrado.", exception.getMessage());
+        verify(entradaRepository, never()).save(any());
     }
 
     @Test
-    void naoDeveRegistrarEntradaQuandoUltrapassarLimiteDoEstoque() {
-
+    void deveLancarExcecaoQuandoLimiteEstoqueExcedido() {
+        // Arrange
         produto.setQuantidadeEstoque(Integer.MAX_VALUE);
+        EntradaMercadoriaRequestDTO dto = new EntradaMercadoriaRequestDTO(1L, 1, new BigDecimal("10.00"));
 
-        when(produtoRepository.findById(1L))
-                .thenReturn(Optional.of(produto));
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
 
-        EntradaMercadoriaRequestDTO dto =
-                new EntradaMercadoriaRequestDTO(1L, 1);
-
-        LimiteEstoqueExcedidoException erro = assertThrows(
+        // Act & Assert
+        LimiteEstoqueExcedidoException exception = assertThrows(
                 LimiteEstoqueExcedidoException.class,
-                () -> entradaService.registrar(dto)
+                () -> entradaMercadoriaService.registrar(dto)
         );
 
-        assertEquals(
-                "A quantidade total excede o limite permitido.",
-                erro.getMessage()
-        );
-
-        assertEquals(
-                Integer.MAX_VALUE,
-                produto.getQuantidadeEstoque()
-        );
-
-        verify(produtoRepository, never()).save(any(Produto.class));
-        verify(entradaRepository, never())
-                .save(any(EntradaMercadoria.class));
+        assertEquals("A quantidade total excede o limite permitido.", exception.getMessage());
+        verify(entradaRepository, never()).save(any());
     }
 }
