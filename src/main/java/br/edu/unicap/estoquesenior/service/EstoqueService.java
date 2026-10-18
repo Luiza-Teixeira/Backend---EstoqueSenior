@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EstoqueService {
 
-    private final ProdutoRepository produtoRepository = null;
+    private final ProdutoRepository produtoRepository; 
 
     @Transactional(readOnly = true)
     public List<EstoqueResponseDTO> consultarEstoqueGeral() {
