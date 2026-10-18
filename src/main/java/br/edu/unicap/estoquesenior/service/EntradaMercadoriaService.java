@@ -24,8 +24,7 @@ public class EntradaMercadoriaService {
     private final ProdutoRepository produtoRepository;
 
     @Transactional
-    public EntradaMercadoria registrar(
-            EntradaMercadoriaRequestDTO dto) {
+    public EntradaMercadoria registrar(EntradaMercadoriaRequestDTO dto) {
 
         if (dto.quantidade() == null || dto.quantidade() <= 0) {
             throw new QuantidadeEntradaInvalidaException(
@@ -55,6 +54,7 @@ public class EntradaMercadoriaService {
         EntradaMercadoria entrada = new EntradaMercadoria();
         entrada.setProduto(produto);
         entrada.setQuantidade(dto.quantidade());
+        entrada.setCustoUnitario(dto.custoUnitario()); // <-- ALTERAÇÃO AQUI
         entrada.setDataHora(LocalDateTime.now());
 
         return entradaRepository.save(entrada);
