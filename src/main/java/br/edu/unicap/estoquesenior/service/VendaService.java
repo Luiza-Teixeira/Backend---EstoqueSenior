@@ -1,5 +1,6 @@
 package br.edu.unicap.estoquesenior.service;
-
+import java.util.List;
+import java.util.Optional;
 import br.edu.unicap.estoquesenior.exception.EstoqueInsuficienteException;
 import br.edu.unicap.estoquesenior.exception.ProdutoNaoEncontradoException;
 import br.edu.unicap.estoquesenior.exception.QuantidadeVendaInvalidaException;
@@ -59,5 +60,12 @@ public class VendaService {
         venda.setDataHora(LocalDateTime.now());
 
         return vendaRepository.save(venda);
+    }
+    public List<Venda> listar() {
+        return vendaRepository.findAll();
+    }
+
+    public Optional<Venda> buscarPorId(Long id) {
+        return vendaRepository.findById(id);
     }
 }
