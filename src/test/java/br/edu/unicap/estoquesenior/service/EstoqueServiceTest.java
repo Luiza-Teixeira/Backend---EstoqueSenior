@@ -1,3 +1,4 @@
+
 package br.edu.unicap.estoquesenior.service;
 
 import br.edu.unicap.estoquesenior.dto.EstoqueResponseDTO;
@@ -47,7 +48,8 @@ class EstoqueServiceTest {
 
     @Test
     void deveConsultarEstoqueGeralComSucesso() {
-        when(produtoRepository.findAll()).thenReturn(List.of(produtoNormal, produtoEstoqueBaixo));
+        when(produtoRepository.findAll())
+                .thenReturn(List.of(produtoNormal, produtoEstoqueBaixo));
 
         List<EstoqueResponseDTO> resultado = estoqueService.consultarEstoqueGeral();
 
@@ -63,7 +65,8 @@ class EstoqueServiceTest {
 
     @Test
     void deveListarApenasProdutosComEstoqueBaixo() {
-        when(produtoRepository.findAll()).thenReturn(List.of(produtoNormal, produtoEstoqueBaixo));
+        when(produtoRepository.findAll())
+                .thenReturn(List.of(produtoNormal, produtoEstoqueBaixo));
 
         List<EstoqueResponseDTO> resultado = estoqueService.listarProdutosComEstoqueBaixo();
 
@@ -81,6 +84,29 @@ class EstoqueServiceTest {
         List<EstoqueResponseDTO> resultado = estoqueService.listarProdutosComEstoqueBaixo();
 
         assertTrue(resultado.isEmpty());
+
+        verify(produtoRepository, times(1)).findAll();
+    }
+
+    @Test
+    void deveConsiderarEstoqueBaixoQuandoQuantidadeForIgualAoMinimo() {
+        Produto produtoNoLimite = new Produto();
+        produtoNoLimite.setId(3L);
+        produtoNoLimite.setNome("Açúcar 1kg");
+        produtoNoLimite.setPrecoVenda(new BigDecimal("5.00"));
+        produtoNoLimite.setQuantidadeEstoque(5);
+        produtoNoLimite.setEstoqueMinimo(5);
+
+        when(produtoRepository.findAll())
+                .thenReturn(List.of(produtoNoLimite));
+
+        List<EstoqueResponseDTO> resultado = estoqueService.listarProdutosComEstoqueBaixo();
+
+        assertEquals(1, resultado.size());
+        assertEquals("Açúcar 1kg", resultado.get(0).nomeProduto());
+        assertEquals(5, resultado.get(0).quantidadeEstoque());
+        assertEquals(5, resultado.get(0).estoqueMinimo());
+        assertTrue(resultado.get(0).estoqueBaixo());
 
         verify(produtoRepository, times(1)).findAll();
     }
