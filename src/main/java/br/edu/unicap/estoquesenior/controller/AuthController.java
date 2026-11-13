@@ -15,8 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -33,12 +31,8 @@ public class AuthController {
         UsuarioResponseDTO usuario =
                 usuarioService.cadastrar(dto);
 
-        URI location = URI.create(
-                "/usuarios/" + usuario.id()
-        );
-
         return ResponseEntity
-                .created(location)
+                .status(201)
                 .body(usuario);
     }
 

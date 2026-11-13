@@ -62,6 +62,7 @@ public class RecuperacaoSenhaService {
                 new TokenRecuperacaoSenha();
 
         recuperacao.setUsuario(usuario);
+
         recuperacao.setTokenHash(
                 gerarHashToken(token)
         );
@@ -82,7 +83,9 @@ public class RecuperacaoSenhaService {
         );
     }
 
-    @Transactional
+    @Transactional(
+            noRollbackFor = TokenRecuperacaoInvalidoException.class
+    )
     public void redefinirSenha(
             RedefinirSenhaRequestDTO dto) {
 
