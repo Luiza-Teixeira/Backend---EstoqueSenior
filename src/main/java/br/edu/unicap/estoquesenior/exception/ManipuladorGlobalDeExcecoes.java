@@ -74,6 +74,66 @@ public class ManipuladorGlobalDeExcecoes {
         );
     }
 
+    @ExceptionHandler(EmailJaCadastradoException.class)
+    public ResponseEntity<RespostaDeErro> tratarEmailJaCadastrado(
+            EmailJaCadastradoException ex,
+            HttpServletRequest request) {
+
+        return construirResposta(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ResponseEntity<RespostaDeErro> tratarCredenciaisInvalidas(
+            CredenciaisInvalidasException ex,
+            HttpServletRequest request) {
+
+        return construirResposta(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(UsuarioNaoEncontradoException.class)
+    public ResponseEntity<RespostaDeErro> tratarUsuarioNaoEncontrado(
+            UsuarioNaoEncontradoException ex,
+            HttpServletRequest request) {
+
+        return construirResposta(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(TokenRecuperacaoInvalidoException.class)
+    public ResponseEntity<RespostaDeErro> tratarTokenRecuperacaoInvalido(
+            TokenRecuperacaoInvalidoException ex,
+            HttpServletRequest request) {
+
+        return construirResposta(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(ConfirmacaoSenhaInvalidaException.class)
+    public ResponseEntity<RespostaDeErro> tratarConfirmacaoSenhaInvalida(
+            ConfirmacaoSenhaInvalidaException ex,
+            HttpServletRequest request) {
+
+        return construirResposta(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<RespostaDeErro> tratarValidacao(
             MethodArgumentNotValidException ex,
@@ -84,7 +144,10 @@ public class ManipuladorGlobalDeExcecoes {
                 .stream()
                 .map(FieldError::getField)
                 .distinct()
-                .map(campo -> campo + ": " + mensagemDoCampo(ex, campo))
+                .map(campo ->
+                        campo + ": "
+                                + mensagemDoCampo(ex, campo)
+                )
                 .toList();
 
         RespostaDeErro corpo = new RespostaDeErro(
@@ -136,9 +199,11 @@ public class ManipuladorGlobalDeExcecoes {
             String campo) {
 
         FieldError erro =
-                ex.getBindingResult().getFieldError(campo);
+                ex.getBindingResult()
+                        .getFieldError(campo);
 
-        return erro != null && erro.getDefaultMessage() != null
+        return erro != null
+                && erro.getDefaultMessage() != null
                 ? erro.getDefaultMessage()
                 : "valor inválido";
     }
